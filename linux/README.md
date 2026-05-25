@@ -12,25 +12,25 @@
 
 | 文件 | 说明 | 周期 |
 |:----|:----|:----:|
-| `scripts/auto_memory.py` | 自动记忆管理（CRUD + 维护） | 按需 |
-| `scripts/hot-memory-bridge.py` | SQLite 事实 → MEMORY.md 合并 | 每 30 分钟 |
 | `scripts/vector-indexer.py` | 向量编码 + 余弦相似度搜索 | 每 60 分钟 |
+| `scripts/hot-memory-bridge.py` | SQLite 事实 → MEMORY.md 合并 | 每 30 分钟 |
+| `scripts/auto_memory.py` | 自动记忆管理（CRUD + 维护） | 按需 |
+| `scripts/auto_memory_context_refresh.py` | 上下文刷新 | 每 15 分钟 |
 | `scripts/memory-capacity-check.py` | 记忆容量监测 | 每日 2 次 |
+| `scripts/memory_usage_check.py` | 记忆使用率检查 | 每小时 |
+| `scripts/fact_extract_prompt.md` | 事实提取 prompt 模板 | cron agent |
 | `prompts/semantic-indexer.md` | LLM 生成语义标签 | cron agent |
-| `scripts/memory-soul-maintain.sh` | Gitee 同步维护 | 每 60 分钟 |
 
 ## 安装
 
 ```bash
-# 1. 装依赖
-pip install sentence-transformers numpy
+# 一键安装
+bash install.sh
 
-# 2. 复制脚本
+# 或手动：
 cp scripts/*.py ~/.hermes/scripts/
 cp prompts/*.md ~/.hermes/scripts/prompts/
-chmod +x ~/.hermes/scripts/*.sh
-
-# 3. 注册 cron（见下方）
+chmod +x ~/.hermes/scripts/*.py
 ```
 
 ## Cron 注册命令
@@ -61,3 +61,5 @@ hermes cron create --name memory-capacity \
 # 全量回填向量索引（首次较慢 ~35s）
 python ~/.hermes/scripts/vector-indexer.py index
 ```
+
+> **注意：** Linux 版为纯 CPU 环境。GPU 加速版本见根目录 `scripts/`（自动检测 GPU/CPU，无需配置）。

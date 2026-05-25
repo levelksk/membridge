@@ -80,10 +80,15 @@ def consolidate(sqlite_facts: list[dict], md_entries: list[dict]) -> str:
     lines = []
 
     def normalize(s: str) -> str:
-        """提取核心关键词用于去重"""
+        """提取核心关键词用于去重。
+        对含路径/URL 的条目跳过 aggressive normalize 改用原始截断。
+        """
         s = s.lower().strip()
         # 去掉类别前缀如 [PREF]、🎯[PREF] 等
         s = re.sub(r"^[^a-z\u4e00-\u9fff]*(\[[a-z]+\])?\s*", "", s)
+        # 含路径分隔符或 URL 的条目 → 用原始内容前 120 字符做 key
+        if '/' in s or '\\' in s or '.' in s or 'http' in s:
+            return s[:120]
         s = re.sub(r"[^\w\u4e00-\u9fff]", "", s)
         return s[:80]  # 取前 80 个字符比较
 

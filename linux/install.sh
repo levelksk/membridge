@@ -22,8 +22,8 @@ cp "$SCRIPT_DIR/vector-indexer.py" "$HERMES_HOME/scripts/"
 cp "$SCRIPT_DIR/auto_memory.py" "$HERMES_HOME/scripts/"
 cp "$SCRIPT_DIR/auto_memory_context_refresh.py" "$HERMES_HOME/scripts/"
 cp "$SCRIPT_DIR/memory-capacity-check.py" "$HERMES_HOME/scripts/"
-cp "$SCRIPT_DIR/memory-soul-maintain.sh" "$HERMES_HOME/scripts/"
-cp "$SCRIPT_DIR/memory-soul-export.sh" "$HERMES_HOME/scripts/"
+cp "$SCRIPT_DIR/fact_extract_prompt.md" "$HERMES_HOME/scripts/"
+cp "$SCRIPT_DIR/memory_usage_check.py" "$HERMES_HOME/scripts/"
 cp "$PROMPT_DIR/semantic-indexer.md" "$HERMES_HOME/scripts/prompts/"
 
 chmod +x "$HERMES_HOME/scripts/"*.sh
@@ -38,18 +38,16 @@ fi
 
 # 安装 Python 依赖
 echo ""
-echo "=== 检查 Python 依赖 ==="
-python3 -c "import sentence_transformers" 2>/dev/null && \
-    echo "✅ sentence-transformers 已安装" || \
-    echo "⚠️  pip install sentence-transformers"
+echo "=== 安装 Python 依赖 ==="
+pip install sentence-transformers numpy --quiet 2>/dev/null && \
+    echo "✅ sentence-transformers + numpy 已安装" || \
+    echo "⚠️  自动安装失败，请手动: pip install sentence-transformers numpy"
 
-python3 -c "import numpy" 2>/dev/null && \
-    echo "✅ numpy 已安装" || \
-    echo "⚠️  pip install numpy"
-
-python3 -c "import torch" 2>/dev/null && \
+# torch 按需安装（CPU 版即可，GPU 版自行装）
+python3 -c "import torch" 2>/dev/null || \
+    pip install torch --quiet 2>/dev/null && \
     echo "✅ torch 已安装" || \
-    echo "⚠️  pip install torch (CPU 版即可)"
+    echo "⚠️  自动安装 torch 失败，请手动: pip install torch"
 
 echo ""
 echo "=== 安装完成 ==="
