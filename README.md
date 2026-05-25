@@ -135,7 +135,7 @@ $ python vector-indexer.py index
 
 | Tier | Method | Speed | Coverage |
 |:-----|:-------|:-----:|:--------:|
-| 🥇 | Vector (384-dim, cross-lingual) | ~3s GPU / ~35s CPU (first load) | 100% |
+| 🥇 | Vector (384-dim, cross-lingual) | ~3s GPU / ~96s CPU (first load) | 100% |
 | 🥈 | Semantic tags (CN/EN bridge) | ~0.1ms | 80%+ |
 | 🥉 | FTS5 keyword | ~0.01ms | 100% |
 

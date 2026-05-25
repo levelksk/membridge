@@ -26,33 +26,44 @@ cp "$SCRIPT_DIR/fact_extract_prompt.md" "$HERMES_HOME/scripts/"
 cp "$SCRIPT_DIR/memory_usage_check.py" "$HERMES_HOME/scripts/"
 cp "$PROMPT_DIR/semantic-indexer.md" "$HERMES_HOME/scripts/prompts/"
 
-chmod +x "$HERMES_HOME/scripts/"*.sh
+chmod +x "$HERMES_HOME/scripts/"*.sh 2>/dev/null || true
 
-echo "✅ 脚本已复制到 $HERMES_HOME/scripts/"
+echo "Scripts copied to $HERMES_HOME/scripts/"
 
 # 确认数据库
 if [ ! -f "$HERMES_HOME/sqlitemem.db" ]; then
-    echo "⚠️  未找到 $HERMES_HOME/sqlitemem.db"
-    echo "   请确保 Hermes 已运行并生成了数据库"
+    echo "Warning: $HERMES_HOME/sqlitemem.db not found"
+    echo "  Ensure Hermes has been run to generate the database"
 fi
 
 # 安装 Python 依赖
 echo ""
-echo "=== 安装 Python 依赖 ==="
-pip install sentence-transformers numpy --quiet 2>/dev/null && \
-    echo "✅ sentence-transformers + numpy 已安装" || \
-    echo "⚠️  自动安装失败，请手动: pip install sentence-transformers numpy"
+echo "=== Installing Python dependencies ==="
 
-# torch 按需安装（CPU 版即可，GPU 版自行装）
+# 检测可用 pip（优先用 Hermes venv，兼容 externally managed 系统）
+PIP="pip3"
+if [ -f "$HERMES_HOME/hermes-agent/venv/bin/pip3" ]; then
+    PIP="$HERMES_HOME/hermes-agent/venv/bin/pip3"
+elif [ -f "$HERMES_HOME/hermes-agent/venv/bin/pip" ]; then
+    PIP="$HERMES_HOME/hermes-agent/venv/bin/pip"
+fi
+# 用户可通过环境变量 PIP_PATH 覆盖
+PIP="${PIP_PATH:-$PIP}"
+
+$PIP install sentence-transformers numpy --quiet 2>/dev/null && \
+    echo "OK: sentence-transformers + numpy installed" || \
+    echo "Warning: auto-install failed, try: $PIP install sentence-transformers numpy"
+
+# torch 按需安装（CPU 版即可）
 python3 -c "import torch" 2>/dev/null || \
-    pip install torch --quiet 2>/dev/null && \
-    echo "✅ torch 已安装" || \
-    echo "⚠️  自动安装 torch 失败，请手动: pip install torch"
+    $PIP install torch --quiet 2>/dev/null && \
+    echo "OK: torch installed" || \
+    echo "Warning: torch auto-install failed, try: $PIP install torch"
 
 echo ""
-echo "=== 安装完成 ==="
+echo "=== Installation complete ==="
 echo ""
-echo "下一步："
-echo "  1. 首次运行向量索引: python $HERMES_HOME/scripts/vector-indexer.py index"
-echo "  2. 注册 cron（见 README.md）"
-echo "  3. 验证: python $HERMES_HOME/scripts/vector-indexer.py stats"
+echo "Next steps:"
+echo "  1. First-time vector index: python $HERMES_HOME/scripts/vector-indexer.py index"
+echo "  2. Register cron jobs (see README.md)"
+echo "  3. Verify: python $HERMES_HOME/scripts/vector-indexer.py stats"

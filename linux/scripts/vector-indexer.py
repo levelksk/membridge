@@ -87,6 +87,14 @@ if __name__ == "__main__":
             print("✅ 无未索引条目")
             sys.exit(0)
 
+        schema_ok = conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('entries','vectors')").fetchone()[0]
+        if schema_ok != 2:
+            tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+            print(f"  ⚠️ 表结构不完整: {tables}")
+            print(f"  期望: entries, vectors | 实际: {tables}")
+            sys.exit(1)
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(entries)").fetchall()]
+        print(f"  📋 entries 表字段: {cols}")
         print(f"📦 待索引: {len(rows)} 条")
         texts = [f"[{r[1]}] {r[3]}" for r in rows]
         entry_ids = [r[0] for r in rows]
