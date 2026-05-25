@@ -45,13 +45,19 @@ pip install sentence-transformers numpy
 # Clone
 git clone https://github.com/levelksk/membridge.git
 cd membridge
+```
 
-# Copy scripts to Hermes
+### Linux
+
+```bash
+# One-shot install
+bash linux/install.sh
+
+# Or manual:
 cp scripts/*.py ~/.hermes/scripts/
-cp prompts/*.md ~/.hermes/scripts/prompts/
-chmod +x ~/.hermes/scripts/*.sh
+chmod +x ~/.hermes/scripts/*.py
 
-# Run initial vector index
+# Initial vector index (takes ~35s on CPU)
 python ~/.hermes/scripts/vector-indexer.py index
 
 # Register cron jobs (via Hermes CLI)
@@ -60,24 +66,40 @@ hermes cron create --name vector-indexer --schedule "0 * * * *" --script ~/.herm
 hermes cron create --name memory-capacity --schedule "0 9,21 * * *" --script ~/.hermes/scripts/memory-capacity-check.py --no-agent
 ```
 
+### Windows
+
+```powershell
+# Copy scripts to Hermes scripts dir
+copy scripts\*.py %USERPROFILE%\AppData\Local\hermes\scripts\
+
+# Initial vector index (takes ~18s first load on GPU)
+python %USERPROFILE%\AppData\Local\hermes\scripts\vector-indexer.py index
+
+# Register cron jobs (via Hermes CLI, same commands)
+hermes cron create --name hot-memory-consolidate --schedule "*/30 * * * *" --script ~/AppData/Local/hermes/scripts/hot-memory-bridge.py --no-agent
+hermes cron create --name vector-indexer --schedule "0 * * * *" --script ~/AppData/Local/hermes/scripts/vector-indexer.py --no-agent
+hermes cron create --name memory-capacity --schedule "0 9,21 * * *" --script ~/AppData/Local/hermes/scripts/memory-capacity-check.py --no-agent
+```
+
 ## 📁 Structure
 
 ```
 membridge/
-├── scripts/          # Cross-platform scripts
-│   ├── vector-indexer.py       # Vector encoding + cosine search
-│   ├── hot-memory-bridge.py    # SQLite → MEMORY.md consolidation
-│   ├── auto_memory.py          # Memory CRUD + maintenance
+├── scripts/                     # Cross-platform scripts
+│   ├── vector-indexer.py        # Vector encoding + cosine search
+│   ├── hot-memory-bridge.py     # SQLite → MEMORY.md consolidation
+│   ├── auto_memory.py           # Memory CRUD + maintenance
+│   ├── auto_memory_context_refresh.py  # Context refresh (cron 15min)
 │   ├── memory-capacity-check.py # Capacity monitor
-│   └── fact_extract_prompt.md  # Fact extraction template
-├── prompts/
-│   └── semantic-indexer.md     # LLM semantic labeling prompt
-├── linux/            # Linux install bundle
-│   ├── scripts/      # Same scripts, Linux-ready
-│   └── install.sh    # One-shot Linux setup
-├── plugins/          # Hermes plugin interface
-│   └── sqlitemem/    # Hermes MemoryProvider plugin
-└── tests/
+│   ├── memory_usage_check.py    # Memory hygiene check
+│   └── fact_extract_prompt.md   # Fact extraction prompt template
+├── linux/                       # Linux install bundle
+│   ├── install.sh               # One-shot Linux setup
+│   ├── README.md                # Linux-specific docs
+│   ├── prompts/
+│   │   └── semantic-indexer.md  # LLM semantic labeling prompt
+│   └── scripts/                 # Linux-ready scripts (same as root)
+└── LICENSE
 ```
 
 ## 🔧 Default Paths
@@ -116,10 +138,6 @@ $ python vector-indexer.py index
 | 🥇 | Vector (384-dim, cross-lingual) | ~3s GPU / ~35s CPU (first load) | 100% |
 | 🥈 | Semantic tags (CN/EN bridge) | ~0.1ms | 80%+ |
 | 🥉 | FTS5 keyword | ~0.01ms | 100% |
-
-## 🏗️ Design
-
-See [DESIGN.md](DESIGN.md) for the full architecture document.
 
 ## 📄 License
 
