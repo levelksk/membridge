@@ -139,6 +139,10 @@ $ python vector-indexer.py index
 | 🥈 | Semantic tags (CN/EN bridge) | ~0.1ms | 80%+ |
 | 🥉 | FTS5 keyword | ~0.01ms | 100% |
 
+## 🏗️ Design
+
+See [DESIGN.md](DESIGN.md) for the full architecture document — layers, data flow, vector engine performance, and design rationale.
+
 ## 📄 License
 
 MIT
