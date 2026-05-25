@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""vector-indexer.py — 向量索引引擎（Linux CPU 版）
+"""vector-indexer.py — 向量索引引擎（通用版）
 为 SQLite 中未向量化的条目生成嵌入向量并存储。
 使用 paraphrase-multilingual-MiniLM-L12-v2 (384维)
 自动检测 GPU/CPU，无需配置
@@ -30,11 +30,29 @@ except Exception as e:
 
 print(f"  ⚙️  设备: {_DEVICE.upper()}")
 
-HERMES_HOME = os.path.expanduser("~/.hermes")
+# ── 检测平台 ──────────────────────────────────────
+if sys.platform == 'win32':
+    HERMES_HOME = os.path.expanduser("~/AppData/Local/hermes")
+else:
+    HERMES_HOME = os.path.expanduser("~/.hermes")
 DB = os.path.join(HERMES_HOME, "sqlitemem.db")
+
 MODEL_NAME = 'paraphrase-multilingual-MiniLM-L12-v2'
 BATCH_SIZE = 32
 
+# ── HF 镜像自动回退（国内用户）─ ──────────────────
+# 如果连接 huggingface.co 失败且用户没设 HF_ENDPOINT，自动切到 hf-mirror.com
+if 'HF_ENDPOINT' not in os.environ:
+    try:
+        import urllib.request
+        urllib.request.urlopen('https://huggingface.co', timeout=5)
+    except Exception:
+        os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
+        print("  🌐 HuggingFace 直连超时，使用镜像: hf-mirror.com")
+        print("  💡 如需自定义: export HF_ENDPOINT=你的镜像地址")
+
+
+# ── 函数定义 ──────────────────────────────────────
 def get_unindexed(conn, limit=50):
     c = conn.cursor()
     rows = c.execute("""
@@ -74,6 +92,7 @@ def search_similar(conn, query_emb, top_k=5):
     results.sort(key=lambda x: -x[0])
     return results[:top_k]
 
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "index"
 
@@ -87,6 +106,7 @@ if __name__ == "__main__":
             print("✅ 无未索引条目")
             sys.exit(0)
 
+        # 表结构校验
         schema_ok = conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('entries','vectors')").fetchone()[0]
         if schema_ok != 2:
             tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
@@ -95,6 +115,7 @@ if __name__ == "__main__":
             sys.exit(1)
         cols = [r[1] for r in conn.execute("PRAGMA table_info(entries)").fetchall()]
         print(f"  📋 entries 表字段: {cols}")
+
         print(f"📦 待索引: {len(rows)} 条")
         texts = [f"[{r[1]}] {r[3]}" for r in rows]
         entry_ids = [r[0] for r in rows]
@@ -125,5 +146,6 @@ if __name__ == "__main__":
         conn = sqlite3.connect(DB)
         total = conn.cursor().execute("SELECT COUNT(*) FROM vectors").fetchone()[0]
         total_entries = conn.cursor().execute("SELECT COUNT(*) FROM entries").fetchone()[0]
+        total_db = conn.cursor().execute("SELECT COUNT(*) FROM entries").fetchone()[0]
         print(f'vectors: {total}/{total_entries} ({total/max(total_entries,1)*100:.0f}%)')
         conn.close()
